@@ -1,0 +1,26 @@
+{
+    "SensorSamplingRate" : "1000",
+    "SendSensorRate" : "30000",
+    "AWS_ACCESSKEYID": "",
+    "AWS_SECRETACCESSKEY": "",
+    "ES_HOST": "",
+    "s3": {
+        "bucket": "aquapi",
+        "key": "snapshots/"
+    },
+
+    "es": {
+        "service": "es",
+        "region": "eu-west-1",
+        "indexName": "aquadata"
+    },
+    "camera" : {
+        "path" : "/tmp/",
+        "fileprefix": "image_"
+    },
+    "pitft": {
+        "redrawSpeed": "500",
+        "snapShotDrawFrequency": "30000",
+        "devicePath" : "/dev/fb1"
+    }
+}
