@@ -23,10 +23,11 @@ var config = require("configger");
 
 var board,
     statusled,
+    motionLaser,
     photoresistor,
     watersensor,
     watertemperature,
-    motion,
+    motions,
     externalLight,
     externalTempC,
     externalPressure,
@@ -48,6 +49,7 @@ board.on("ready", function() {
     var aquaDataSampler = new aquaData.aquaData(Date.now(), 0, 0, 0, 0, 0, 0, 0, 0);
 
     //Defining Statusled
+    logger.info('Defining and turning on status led');
     statusled = new five.Led.RGB({
         pins: {
             red: 3,
@@ -59,16 +61,14 @@ board.on("ready", function() {
     statusled.on();
     statusled.color("blue");
 
-    //Define motion sensor
-    var motion = new five.Motion({
-        pin: 7
+
+    logger.info('Defining and turning on motionLaser sensor');
+    motionLaser = new five.Led({
+      pin: 9
     });
 
-    //Drawing in the pitft
-    this.loop(config.get('pitft:redrawSpeed'), function() {
-        fillAquaDataSampler(aquaDataSampler);
-        mytft.drawSensorValuesOnScreen(latestReady, aquaDataSampler);
-    });
+    motionLaser.on();
+
 
     //Defining sensors
     externalTempC = new five.Thermometer({
@@ -106,28 +106,55 @@ board.on("ready", function() {
         freq: config.get('SensorSamplingRate')
     });
 
-    //Handling motion
-    motion.on("calibrated", function() {
-        logger.info('Motion calibrated');
+  
+    photoresistor.on("change", function(){
+        //to-do - put lighthreshold into config
+        //        trottle for snapshots
+
+        if (photoresistor.value > 60) {
+          logger.info("Laser beam broken, we have movement - " + photoresistor.value);
+           statusled.strobe(250);
+           aquaDataSampler.motions = aquaDataSampler.motions + 1;
+           latestReady = false;          
+           snapshot.takeSnapshot(function callback(err) {
+                if (err) {
+                    logger.info('Unable to take camera snapshot ', err);
+                    latestReady = false;
+                 } else {
+                   latestReady = true;     
+                 }
+                statusled.stop();
+            });
+
+         }
+
     });
 
-    motion.on("motionstart", function() {
-        statusled.strobe(250);
-        aquaDataSampler.motions = aquaDataSampler.motions + 1;
-        latestReady = false;
-        snapshot.takeSnapshot(function callback(err) {
-            if (err) {
-                logger.info('Unable to take camera snapshot ', err);
-            }
-            latestReady = true;
-        });
-        logger.info('Motion detected (' + aquaDataSampler.motions + ')');
+    // motion.on("motionstart", function() {
+    //     statusled.strobe(250);
+    //     aquaDataSampler.motions = aquaDataSampler.motions + 1;
+    //     latestReady = false;
+    //     snapshot.takeSnapshot(function callback(err) {
+    //         if (err) {
+    //             logger.info('Unable to take camera snapshot ', err);
+    //         }
+    //         latestReady = true;
+    //     });
+    //     logger.info('Motion detected (' + aquaDataSampler.motions + ')');
+    // });
+
+    // motion.on("motionend", function() {
+    //     logger.info('Motion end');
+    //     statusled.stop();
+    // });
+
+
+  //Drawing in the pitft
+    this.loop(config.get('pitft:redrawSpeed'), function() {
+        fillAquaDataSampler(aquaDataSampler);
+        mytft.drawSensorValuesOnScreen(latestReady, aquaDataSampler);
     });
 
-    motion.on("motionend", function() {
-        logger.info('Motion end');
-        statusled.stop();
-    });
 
 });
 
