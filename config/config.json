@@ -1,6 +1,8 @@
 {
-    "SensorSamplingRate" : "1000",
+    "SensorSamplingRate" : "500",
     "SendSensorRate" : "30000",
+    "LaserMotionThreshold" : "60",
+    "SnapshotThrottleTime" : "30000",
     "AWS_ACCESSKEYID": "",
     "AWS_SECRETACCESSKEY": "",
     "ES_HOST": "",

@@ -35,6 +35,8 @@ var board,
 mytft.init();
 
 var latestReady = false;
+var readyForSnapshot = true;
+var throttleTimer;
 
 //Defining board for reading sensors
 board = new five.Board({
@@ -45,6 +47,10 @@ board = new five.Board({
 board.on("ready", function() {
     logger.info('Board ready for action');
 
+    var laserMotionThreshold = config.get('LaserMotionThreshold');
+    var brokenLaserBeam = false;
+    logger.info("Laser sensor threshold is set to ", laserMotionThreshold);
+
     var aquaDataSampler = new aquaData.aquaData(Date.now(), 0, 0, 0, 0, 0, 0, 0, 0);
 
     logger.info('Defining and turning on motionLaser sensor');
@@ -53,7 +59,7 @@ board.on("ready", function() {
     });
 
     motionLaser.on();
-
+    motions = 0;
 
     //Defining sensors
     externalTempC = new five.Thermometer({
@@ -93,22 +99,35 @@ board.on("ready", function() {
 
 
     photoresistor.on("change", function() {
-        //to-do - put lighthreshold into config
         //        trottle for snapshots
 
-        if (photoresistor.value > 60) {
-            logger.info("Laser beam broken, we have movement - " + photoresistor.value);
-            aquaDataSampler.motions = aquaDataSampler.motions + 1;
-            latestReady = false;
-            snapshot.takeSnapshot(function callback(err) {
-                if (err) {
-                    logger.info('Unable to take camera snapshot ', err);
-                    latestReady = false;
-                } else {
-                    latestReady = true;
-                }
-            });
+        if (photoresistor.value > laserMotionThreshold) {
 
+            if (!brokenLaserBeam) {
+                logger.info("Laser beam broken, we have movement (" + photoresistor.value + ")");
+                brokenLaserBeam = true;
+                motions++;
+
+                latestReady = false;
+                if (readyForSnapshot) {
+                    setSnapshotThrottleTimer(true);
+
+                    snapshot.takeSnapshot(function callback(err) {
+                        if (err) {
+                            logger.info('Unable to take camera snapshot ', err);
+                            latestReady = false;
+                        } else {
+                            latestReady = true;
+                        }
+                    });
+                }
+            }
+
+        } else {
+            if (brokenLaserBeam) {
+                logger.info("Laser beam set to unbroken");
+                brokenLaserBeam = false;
+            }
         }
 
     });
@@ -127,6 +146,20 @@ setInterval(function() {
     latestReady = false;
 }, config.get('pitft:snapShotDrawFrequency'));
 
+// A snapshot throttle timer
+function setSnapshotThrottleTimer(operation) {
+    var throttleTime = config.get('SnapshotThrottleTime') || 30000;
+
+    if (operation) {
+        logger.info("Setting snapshot throttle ", throttleTime, "msec");
+        readyForSnapshot = false;
+        throttleTimer = setInterval(function() {
+            readyForSnapshot = true;
+            logger.info("Releaseing snapshot throttle");
+        }, throttleTime);
+    }
+}
+
 //Sending off sensor samples to elastic
 setInterval(function() {
     var aquaDataToStore = new aquaData.aquaData(Date.now(), 0, 0, 0, 0, 0, 0, 0, 0);
@@ -134,6 +167,7 @@ setInterval(function() {
     if (board.isReady) {
 
         fillAquaDataSampler(aquaDataToStore);
+        motions = 0;
         aquaDataToStore = JSON.parse(JSON.stringify(aquaDataToStore));
 
         elastic.addDocument(aquaDataToStore, function(err, data) {
@@ -158,5 +192,5 @@ function fillAquaDataSampler(aquaDataSampler) {
     aquaDataSampler.externalTempC = externalTempC.celsius;
     aquaDataSampler.externalPressure = externalPressure.pressure;
     aquaDataSampler.externalHumidity = externalHumidity.relativeHumidity;
-    aquaDataSampler.motions = 0; //Aggregate and send of num of motions since last mnotion?
+    aquaDataSampler.motions = motions;
 }
