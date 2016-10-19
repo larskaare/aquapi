@@ -64,7 +64,7 @@ board.on("ready", function() {
 
     logger.info('Defining and turning on motionLaser sensor');
     motionLaser = new five.Led({
-      pin: 9
+        pin: 9
     });
 
     motionLaser.on();
@@ -106,50 +106,31 @@ board.on("ready", function() {
         freq: config.get('SensorSamplingRate')
     });
 
-  
-    photoresistor.on("change", function(){
+
+    photoresistor.on("change", function() {
         //to-do - put lighthreshold into config
         //        trottle for snapshots
 
         if (photoresistor.value > 60) {
-          logger.info("Laser beam broken, we have movement - " + photoresistor.value);
-           statusled.strobe(250);
-           aquaDataSampler.motions = aquaDataSampler.motions + 1;
-           latestReady = false;          
-           snapshot.takeSnapshot(function callback(err) {
+            logger.info("Laser beam broken, we have movement - " + photoresistor.value);
+            statusled.strobe(250);
+            aquaDataSampler.motions = aquaDataSampler.motions + 1;
+            latestReady = false;
+            snapshot.takeSnapshot(function callback(err) {
                 if (err) {
                     logger.info('Unable to take camera snapshot ', err);
                     latestReady = false;
-                 } else {
-                   latestReady = true;     
-                 }
+                } else {
+                    latestReady = true;
+                }
                 statusled.stop();
             });
 
-         }
+        }
 
     });
 
-    // motion.on("motionstart", function() {
-    //     statusled.strobe(250);
-    //     aquaDataSampler.motions = aquaDataSampler.motions + 1;
-    //     latestReady = false;
-    //     snapshot.takeSnapshot(function callback(err) {
-    //         if (err) {
-    //             logger.info('Unable to take camera snapshot ', err);
-    //         }
-    //         latestReady = true;
-    //     });
-    //     logger.info('Motion detected (' + aquaDataSampler.motions + ')');
-    // });
-
-    // motion.on("motionend", function() {
-    //     logger.info('Motion end');
-    //     statusled.stop();
-    // });
-
-
-  //Drawing in the pitft
+    //Drawing in the pitft
     this.loop(config.get('pitft:redrawSpeed'), function() {
         fillAquaDataSampler(aquaDataSampler);
         mytft.drawSensorValuesOnScreen(latestReady, aquaDataSampler);
