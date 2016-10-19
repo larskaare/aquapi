@@ -22,7 +22,6 @@ var five = require("johnny-five");
 var config = require("configger");
 
 var board,
-    statusled,
     motionLaser,
     photoresistor,
     watersensor,
@@ -47,20 +46,6 @@ board.on("ready", function() {
     logger.info('Board ready for action');
 
     var aquaDataSampler = new aquaData.aquaData(Date.now(), 0, 0, 0, 0, 0, 0, 0, 0);
-
-    //Defining Statusled
-    logger.info('Defining and turning on status led');
-    statusled = new five.Led.RGB({
-        pins: {
-            red: 3,
-            green: 6,
-            blue: 5,
-        }
-    });
-
-    statusled.on();
-    statusled.color("blue");
-
 
     logger.info('Defining and turning on motionLaser sensor');
     motionLaser = new five.Led({
@@ -113,7 +98,6 @@ board.on("ready", function() {
 
         if (photoresistor.value > 60) {
             logger.info("Laser beam broken, we have movement - " + photoresistor.value);
-            statusled.strobe(250);
             aquaDataSampler.motions = aquaDataSampler.motions + 1;
             latestReady = false;
             snapshot.takeSnapshot(function callback(err) {
@@ -123,7 +107,6 @@ board.on("ready", function() {
                 } else {
                     latestReady = true;
                 }
-                statusled.stop();
             });
 
         }
@@ -152,8 +135,6 @@ setInterval(function() {
 
         fillAquaDataSampler(aquaDataToStore);
         aquaDataToStore = JSON.parse(JSON.stringify(aquaDataToStore));
-
-        statusled.color("green");
 
         elastic.addDocument(aquaDataToStore, function(err, data) {
             if (err) {
