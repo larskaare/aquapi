@@ -67,9 +67,9 @@ board.on("ready", function() {
         freq: config.get('SensorSamplingRate')
     });
 
-    //externalLight = new five.Light({
-    //   controller: "TSL2561"
-    // });
+    externalLight = new five.Light({
+        controller: "TSL2561"
+    });
 
     photoresistor = new five.Sensor({
         pin: "A0",
@@ -99,8 +99,6 @@ board.on("ready", function() {
 
 
     photoresistor.on("change", function() {
-        //        trottle for snapshots
-
         if (photoresistor.value > laserMotionThreshold) {
 
             if (!brokenLaserBeam) {
@@ -183,12 +181,11 @@ setInterval(function() {
 }, config.get('SendSensorRate'));
 
 function fillAquaDataSampler(aquaDataSampler) {
-    //filling the aquaDataSampler
     aquaDataSampler.timestamp = Date.now();
     aquaDataSampler.aquariumLightlevel = photoresistor.scaleTo([0, 255]);
     aquaDataSampler.aquariumWatertemperatureCelsius = watertemperature.celsius;
     aquaDataSampler.aquariumWaterSensor = watersensor.scaleTo([0, 255]);
-    aquaDataSampler.externalLight = 0; //Not yet
+    aquaDataSampler.externalLight = externalLight.lux;
     aquaDataSampler.externalTempC = externalTempC.celsius;
     aquaDataSampler.externalPressure = externalPressure.pressure;
     aquaDataSampler.externalHumidity = externalHumidity.relativeHumidity;
