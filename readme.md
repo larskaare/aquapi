@@ -6,8 +6,8 @@ The project work as following:
 * The tft hat on the rpi displays informations from the sensors in- and outside the aquarium
 * The background picture of the tft hat is the latest shot from the onboard camera
 * The onboard camera is triggerd by fish's (and other marine life) breaking the laser beam. 
-** Camera pictures as using on tft hat as well as loaded up to a S# bucket on AWS
-** The camera have various trottle functions avoiding it to go bananas. These are configurable
+  * Camera pictures as using on tft hat as well as loaded up to a S# bucket on AWS
+  * The camera have various trottle functions avoiding it to go bananas. These are configurable
 * Sensordata are send on regular, configurable intervals, up to the Elasticsearch service on AWS. Here they can be displayed and analysed using Kibana
 
 ## The hardware set-up ##
@@ -43,11 +43,11 @@ To get started (Hardware)
 * Connect the rpi to the Arduino board using an usb cable
 * Make sure that the Arduino has installed the Standard Firmate software
 * On the arduino wire-up sensors
-** TSL2561 and BME280 are using the i2c bus. Remember to provide them with 3.3v power, not 5v.
-** The laser diode is using a digial port
-** The photoresistor is using an analog port. The camera function will be triggered by breaking the laser beam. The length of the wires will depend on your set-up 
-** The DS18B20 is using a digial port (amongst others)
-** The Funduino Watersensor is using an analog port
+  * TSL2561 and BME280 are using the i2c bus. Remember to provide them with 3.3v power, not 5v.
+  * The laser diode is using a digial port
+  * The photoresistor is using an analog port. The camera function will be triggered by breaking the laser beam. The length of the wires will depend on your set-up 
+  * The DS18B20 is using a digial port (amongst others)
+  * The Funduino Watersensor is using an analog port
 * On the rpi connect the camera to the on-board port. Having a flex cabel of 1m+ will be a good idea :)
 
 To get started (Software)
